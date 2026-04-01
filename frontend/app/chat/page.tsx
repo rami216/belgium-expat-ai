@@ -78,9 +78,6 @@ export default function ChatPage() {
 
       setChatHistory((prev) => [...prev, { role: "ai", content: data.advice }]);
       setCurrentSpend(data.new_spend);
-
-      // If we wanted to update global user state instantly here, we could,
-      // but for now relying on the page refresh / AuthContext works perfectly!
     } catch (error: any) {
       setChatHistory((prev) => [
         ...prev,
@@ -202,9 +199,8 @@ export default function ChatPage() {
   const usedCredits = Math.round(currentSpend * CREDIT_MULTIPLIER);
   const totalCredits = Math.round(maxSpend * CREDIT_MULTIPLIER);
 
-  // 🛑 THE LOCKOUT LOGIC: Check if they are out of credits and NOT a Pro user
-  const isOutOfCredits =
-    user.subscription_status !== "pro" && currentSpend >= maxSpend;
+  // 🛑 STRICT PAYWALL LOGIC: Lock the chat if they are NOT a Pro user. Period.
+  const isLocked = user.subscription_status !== "pro";
 
   return (
     <div className="max-w-4xl mx-auto flex flex-col h-[80vh]">
@@ -324,7 +320,7 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* 🛑 THE UPDATED FORM: Disabled when out of credits */}
+      {/* 🛑 THE UPDATED FORM: Strict Paywall Enabled */}
       <div className="bg-white p-4 rounded-b-2xl border border-gray-200 shadow-sm">
         <form onSubmit={askConsultant} className="flex space-x-4">
           <input
@@ -333,17 +329,17 @@ export default function ChatPage() {
             onChange={(e) => setQuestion(e.target.value)}
             className="flex-1 bg-gray-100 px-4 py-3 rounded-xl outline-none disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed"
             placeholder={
-              isOutOfCredits
-                ? "🔒 Out of credits! Please upgrade to Pro to continue."
+              isLocked
+                ? "🔒 Subscriber-only access. Please upgrade to Pro."
                 : "Ask a question..."
             }
-            disabled={isTyping || isOutOfCredits}
+            disabled={isTyping || isLocked}
           />
           <button
             type="submit"
-            disabled={isTyping || isOutOfCredits}
+            disabled={isTyping || isLocked}
             className={`px-6 py-3 rounded-xl font-bold transition-all ${
-              isOutOfCredits || isTyping
+              isLocked || isTyping
                 ? "bg-gray-400 text-gray-200 cursor-not-allowed shadow-none"
                 : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
             }`}
