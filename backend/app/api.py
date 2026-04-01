@@ -40,7 +40,9 @@ app = FastAPI(title="Belgian Expat Backend API", lifespan=lifespan)
 app.add_middleware(
     SessionMiddleware, 
     secret_key=os.getenv("SECRET_KEY", "fallback-secret-key"),
-    max_age=2592000
+    max_age=2592000,
+    same_site="none",
+    https_only=True
 )
 
 app.add_middleware(
