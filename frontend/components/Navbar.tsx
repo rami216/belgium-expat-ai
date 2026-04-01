@@ -24,10 +24,10 @@ export default function Navbar() {
                 Home
               </Link>
               <Link
-                href="/about"
-                className="text-gray-600 hover:text-blue-600 transition font-medium"
+                href="/billing"
+                className="text-gray-500 hover:text-blue-600 font-bold"
               >
-                About Us
+                Pricing
               </Link>
 
               {user && (

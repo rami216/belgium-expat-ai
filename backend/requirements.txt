@@ -14,3 +14,4 @@ langchain-community
 langchain-postgres
 langgraph
 pydantic
+stripe

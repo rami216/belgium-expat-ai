@@ -16,6 +16,8 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     total_tokens = Column(Integer, default=0)
     total_spend = Column(Float, default=0.0)
+    stripe_customer_id = Column(String, nullable=True)
+    subscription_status = Column(String, default="free")
 
 class ChatMessage(Base):
     __tablename__ = "chat_messages"

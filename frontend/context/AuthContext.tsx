@@ -17,6 +17,7 @@ type User = {
   avatar_url: string;
   total_spend: number;
   max_spend: number;
+  subscription_status: string; // 🌟 ADDED STRIPE STATUS
 } | null;
 
 type AuthContextType = {

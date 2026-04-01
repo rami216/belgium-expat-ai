@@ -78,6 +78,9 @@ export default function ChatPage() {
 
       setChatHistory((prev) => [...prev, { role: "ai", content: data.advice }]);
       setCurrentSpend(data.new_spend);
+
+      // If we wanted to update global user state instantly here, we could,
+      // but for now relying on the page refresh / AuthContext works perfectly!
     } catch (error: any) {
       setChatHistory((prev) => [
         ...prev,
@@ -85,6 +88,40 @@ export default function ChatPage() {
       ]);
     } finally {
       setIsTyping(false);
+    }
+  };
+
+  // 💳 STRIPE: Handle Upgrading to Pro
+  const handleUpgrade = async () => {
+    try {
+      const res = await fetch(
+        "https://belgium-expat-ai-backend.onrender.com/api/create-checkout-session",
+        {
+          method: "POST",
+          credentials: "include",
+        },
+      );
+      const data = await res.json();
+      if (data.url) window.location.href = data.url; // Redirect to Stripe!
+    } catch (error) {
+      console.error("Checkout failed");
+    }
+  };
+
+  //  STRIPE: Handle Managing Billing (Cancel/Update)
+  const handleManageBilling = async () => {
+    try {
+      const res = await fetch(
+        "https://belgium-expat-ai-backend.onrender.com/api/create-portal-session",
+        {
+          method: "POST",
+          credentials: "include",
+        },
+      );
+      const data = await res.json();
+      if (data.url) window.location.href = data.url; // Redirect to Stripe Portal!
+    } catch (error) {
+      console.error("Portal failed");
     }
   };
 
@@ -172,20 +209,42 @@ export default function ChatPage() {
           Digital Relocation Consultant
         </h1>
 
-        {/* 🪙 VIRTUAL CREDIT TRACKER UI */}
+        {/* 🪙 VIRTUAL CREDIT TRACKER UI OR PRO BADGE */}
         <div className="flex flex-col items-end">
-          <span className="text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">
-            Credits: {Math.round(currentSpend * 10000).toLocaleString()} /{" "}
-            {Math.round(maxSpend * 10000).toLocaleString()}
-          </span>
-          <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className={`h-full transition-all duration-500 ${
-                spendPercent > 80 ? "bg-red-500" : "bg-blue-600"
-              }`}
-              style={{ width: `${spendPercent}%` }}
-            ></div>
-          </div>
+          {user.subscription_status === "pro" ? (
+            <div className="flex flex-col items-end space-y-2">
+              <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide border border-yellow-300 shadow-sm">
+                ⭐ Pro Consultant Plan
+              </span>
+              <button
+                onClick={handleManageBilling}
+                className="text-xs text-gray-500 hover:text-gray-800 underline"
+              >
+                Manage Billing
+              </button>
+            </div>
+          ) : (
+            <>
+              <span className="text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">
+                Credits: {usedCredits.toLocaleString()} /{" "}
+                {totalCredits.toLocaleString()}
+              </span>
+              <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden mb-2">
+                <div
+                  className={`h-full transition-all duration-500 ${
+                    spendPercent > 80 ? "bg-red-500" : "bg-blue-600"
+                  }`}
+                  style={{ width: `${spendPercent}%` }}
+                ></div>
+              </div>
+              <button
+                onClick={handleUpgrade}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold px-4 py-1.5 rounded-lg shadow-md transition-all"
+              >
+                Upgrade to Pro
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -230,6 +289,7 @@ export default function ChatPage() {
           </div>
         )}
       </div>
+
       {/* THE FLOATING POPUP BUTTON */}
       {highlightedText && (
         <div

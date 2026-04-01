@@ -17,9 +17,12 @@ from app.models import User, ChatMessage,SavedText,Category
 
 # 🚀 IMPORT THE SEPARATED AI ENGINE
 from app.ai_engine import engine as ai_engine
-
+import stripe
 load_dotenv()
 
+
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+DOMAIN = "https://belgium-expat-ai.vercel.app"
 # ==========================================
 # 1. ASYNC DATABASE STARTUP (SQLAlchemy)
 # ==========================================
@@ -73,6 +76,7 @@ class ExpatResponse(BaseModel):
     category: str
     advice: str
     new_spend: float
+    subscription_status: str 
     
 class SaveTextRequest(BaseModel):
     content: str
@@ -178,17 +182,115 @@ async def get_chat_history(request: Request, db: AsyncSession = Depends(get_db))
         for msg in messages
     ]
 
+
+#region checkout
+@app.post("/api/create-checkout-session")
+async def create_checkout_session(request: Request, db: AsyncSession = Depends(get_db)):
+    user_id = request.session.get('user_id')
+    if not user_id: raise HTTPException(status_code=401, detail="Not logged in.")
+    
+    result = await db.execute(select(User).where(User.id == user_id))
+    db_user = result.scalars().first()
+
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            customer_email=db_user.email,
+            client_reference_id=str(db_user.id), # Tells the webhook WHO paid
+            payment_method_types=['card'],
+            line_items=[
+                {
+                    'price': os.getenv('STRIPE_PRICE_ID'),
+                    'quantity': 1,
+                },
+            ],
+            mode='subscription',
+            success_url=DOMAIN + '/chat?success=true',
+            cancel_url=DOMAIN + '/chat?canceled=true',
+        )
+        return {"url": checkout_session.url}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/create-portal-session")
+async def create_portal_session(request: Request, db: AsyncSession = Depends(get_db)):
+    user_id = request.session.get('user_id')
+    if not user_id: raise HTTPException(status_code=401, detail="Not logged in.")
+    
+    result = await db.execute(select(User).where(User.id == user_id))
+    db_user = result.scalars().first()
+
+    if not db_user.stripe_customer_id:
+        raise HTTPException(status_code=400, detail="No active subscription found.")
+
+    try:
+        portalSession = stripe.billing_portal.Session.create(
+            customer=db_user.stripe_customer_id,
+            return_url=DOMAIN + '/chat',
+        )
+        return {"url": portalSession.url}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/stripe-webhook")
+async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
+    payload = await request.body()
+    sig_header = request.headers.get('stripe-signature')
+    endpoint_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
+
+    try:
+        event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail="Invalid payload")
+    except stripe.error.SignatureVerificationError as e:
+        raise HTTPException(status_code=400, detail="Invalid signature")
+
+    # Handle the checkout.session.completed event
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        user_id = session.get('client_reference_id')
+        customer_id = session.get('customer')
+
+        if user_id:
+            # Upgrade the user in the database!
+            result = await db.execute(select(User).where(User.id == user_id))
+            db_user = result.scalars().first()
+            if db_user:
+                db_user.stripe_customer_id = customer_id
+                db_user.subscription_status = "pro"
+                await db.commit()
+
+    # Handle subscription cancellation
+    elif event['type'] == 'customer.subscription.deleted':
+        subscription = event['data']['object']
+        customer_id = subscription.get('customer')
+        
+        result = await db.execute(select(User).where(User.stripe_customer_id == customer_id))
+        db_user = result.scalars().first()
+        if db_user:
+            db_user.subscription_status = "free"
+            await db.commit()
+
+    return {"status": "success"}
+
+
+#endregion checkout
 @app.post("/api/ask", response_model=ExpatResponse)
 async def ask_consultant(request: ExpatRequest, http_request: Request, db: AsyncSession = Depends(get_db)):
     user_id = http_request.session.get('user_id')
-    if not user_id: raise HTTPException(status_code=401, detail="Not logged in.")
+    if not user_id: 
+        raise HTTPException(status_code=401, detail="Not logged in.")
 
     # 1. FETCH USER & CHECK SPEND LIMIT
     result = await db.execute(select(User).where(User.id == user_id))
     db_user = result.scalars().first()
+    
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
     max_limit = float(os.getenv("MAX_SPEND_LIMIT", 1.00))
     
-    if db_user.total_spend >= max_limit:
+    # 🌟 STRIPE UPDATE: Bypass the credit check if they are on the "pro" plan
+    if db_user.subscription_status != "pro" and db_user.total_spend >= max_limit:
         raise HTTPException(status_code=402, detail="Credit limit reached. Please upgrade your plan.")
 
     try:
@@ -196,12 +298,12 @@ async def ask_consultant(request: ExpatRequest, http_request: Request, db: Async
         db.add(user_msg)
 
         # 2. CALL AI
-        result = await ai_engine.ainvoke({"user_query": request.question})
-        ai_advice = result.get("final_advice", "I encountered an error.")
+        ai_result = await ai_engine.ainvoke({"user_query": request.question})
+        ai_advice = ai_result.get("final_advice", "I encountered an error.")
         
         # 3. CALCULATE COST (GPT-4o-mini costs $0.15/1M input & $0.60/1M output)
-        total_in = result.get('p_in', 0) + result.get('c_in', 0)
-        total_out = result.get('p_out', 0) + result.get('c_out', 0)
+        total_in = ai_result.get('p_in', 0) + ai_result.get('c_in', 0)
+        total_out = ai_result.get('p_out', 0) + ai_result.get('c_out', 0)
         cost = (total_in * 0.00000015) + (total_out * 0.00000060)
         
         # 4. SAVE EVERYTHING
@@ -213,15 +315,17 @@ async def ask_consultant(request: ExpatRequest, http_request: Request, db: Async
         await db.commit()
         
         return ExpatResponse(
-            profile=result.get("profile", "Unknown"),
-            category=result.get("category", "general"),
+            profile=ai_result.get("profile", "Unknown"),
+            category=ai_result.get("category", "general"),
             advice=ai_advice,
-            new_spend=db_user.total_spend 
+            new_spend=db_user.total_spend,
+            subscription_status=db_user.subscription_status 
         )
     except Exception as e:
+        await db.rollback() # 🛡️ Protects the DB from crashing if the AI fails
         raise HTTPException(status_code=500, detail=str(e))
     
-    
+        
 @app.post("/api/saved-texts")
 async def save_highlighted_text(req: SaveTextRequest, request: Request, db: AsyncSession = Depends(get_db)):
     user_id = request.session.get('user_id')
