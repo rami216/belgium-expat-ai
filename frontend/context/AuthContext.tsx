@@ -17,7 +17,7 @@ type User = {
   avatar_url: string;
   total_spend: number;
   max_spend: number;
-  subscription_status: string; // 🌟 ADDED STRIPE STATUS
+  subscription_status: string;
 } | null;
 
 type AuthContextType = {
@@ -37,8 +37,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loadingAuth, setLoadingAuth] = useState(true);
 
   useEffect(() => {
+    // 🚀 ADDED CACHE-BUSTING HERE
     fetch("https://belgium-expat-ai-backend.onrender.com/me", {
       credentials: "include",
+      cache: "no-store", // Tell Next.js not to cache this!
+      headers: {
+        "Cache-Control": "no-cache",
+        Pragma: "no-cache",
+      },
     })
       .then((res) => {
         if (res.ok) return res.json();
