@@ -151,7 +151,8 @@ async def get_current_user(request: Request, db: AsyncSession = Depends(get_db))
         "profile_type": db_user.profile_type,
         "avatar_url": db_user.avatar_url,
         "total_spend": db_user.total_spend or 0.0,
-        "max_spend": float(os.getenv("MAX_SPEND_LIMIT", 1.00))
+        "max_spend": float(os.getenv("MAX_SPEND_LIMIT", 1.00)),
+        "subscription_status": db_user.subscription_status
     }
 
 # ==========================================
