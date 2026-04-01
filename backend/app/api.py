@@ -238,17 +238,20 @@ async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     endpoint_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
 
     try:
+        # Construct the event safely
         event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
     except ValueError as e:
         raise HTTPException(status_code=400, detail="Invalid payload")
     except stripe.error.SignatureVerificationError as e:
         raise HTTPException(status_code=400, detail="Invalid signature")
 
-    # Handle the checkout.session.completed event
-    if event['type'] == 'checkout.session.completed':
-        session = event['data']['object']
-        user_id = session.get('client_reference_id')
-        customer_id = session.get('customer')
+    # 1. Handle the checkout.session.completed event
+    if event.type == 'checkout.session.completed':
+        session = event.data.object
+        
+        # 🚀 STRIPE FIX: Use dot notation instead of .get()!
+        user_id = session.client_reference_id
+        customer_id = session.customer
 
         if user_id:
             # Upgrade the user in the database!
@@ -259,10 +262,12 @@ async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
                 db_user.subscription_status = "pro"
                 await db.commit()
 
-    # Handle subscription cancellation
-    elif event['type'] == 'customer.subscription.deleted':
-        subscription = event['data']['object']
-        customer_id = subscription.get('customer')
+    # 2. Handle subscription cancellation
+    elif event.type == 'customer.subscription.deleted':
+        subscription = event.data.object
+        
+        # 🚀 STRIPE FIX: Use dot notation instead of .get()!
+        customer_id = subscription.customer
         
         result = await db.execute(select(User).where(User.stripe_customer_id == customer_id))
         db_user = result.scalars().first()
