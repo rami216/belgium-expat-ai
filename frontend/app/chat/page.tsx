@@ -210,40 +210,42 @@ export default function ChatPage() {
         </h1>
 
         {/* 🪙 VIRTUAL CREDIT TRACKER UI OR PRO BADGE */}
+        {/* 🪙 VIRTUAL CREDIT TRACKER UI AND PRO BADGE */}
         <div className="flex flex-col items-end">
+          {/* 1. ALWAYS SHOW THE CREDITS PROGRESS BAR */}
+          <span className="text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">
+            Credits: {usedCredits.toLocaleString()} /{" "}
+            {totalCredits.toLocaleString()}
+          </span>
+          <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden mb-3">
+            <div
+              className={`h-full transition-all duration-500 ${
+                spendPercent > 80 ? "bg-red-500" : "bg-blue-600"
+              }`}
+              style={{ width: `${spendPercent}%` }}
+            ></div>
+          </div>
+
+          {/* 2. SHOW BADGE IF PRO, SHOW UPGRADE IF FREE */}
           {user.subscription_status === "pro" ? (
-            <div className="flex flex-col items-end space-y-2">
-              <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide border border-yellow-300 shadow-sm">
-                ⭐ Pro Consultant Plan
-              </span>
+            <div className="flex items-center space-x-3">
               <button
                 onClick={handleManageBilling}
                 className="text-xs text-gray-500 hover:text-gray-800 underline"
               >
                 Manage Billing
               </button>
+              <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide border border-yellow-300 shadow-sm">
+                ⭐ Pro Consultant Plan
+              </span>
             </div>
           ) : (
-            <>
-              <span className="text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">
-                Credits: {usedCredits.toLocaleString()} /{" "}
-                {totalCredits.toLocaleString()}
-              </span>
-              <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden mb-2">
-                <div
-                  className={`h-full transition-all duration-500 ${
-                    spendPercent > 80 ? "bg-red-500" : "bg-blue-600"
-                  }`}
-                  style={{ width: `${spendPercent}%` }}
-                ></div>
-              </div>
-              <button
-                onClick={handleUpgrade}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold px-4 py-1.5 rounded-lg shadow-md transition-all"
-              >
-                Upgrade to Pro
-              </button>
-            </>
+            <button
+              onClick={handleUpgrade}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold px-4 py-1.5 rounded-lg shadow-md transition-all"
+            >
+              Upgrade to Pro
+            </button>
           )}
         </div>
       </div>
