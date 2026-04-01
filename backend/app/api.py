@@ -45,7 +45,7 @@ app.add_middleware(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000","https://belgium-expat-ai.vercel.app"],
     allow_credentials=True, 
     allow_methods=["*"],
     allow_headers=["*"],
@@ -90,7 +90,7 @@ async def login(request: Request):
 @app.get("/logout")
 async def logout(request: Request):
     request.session.pop('user_id', None) # Clear the secure cookie
-    return RedirectResponse(url="http://localhost:3000/")
+    return RedirectResponse(url="https://belgium-expat-ai.vercel.app/")
 
 @app.get("/auth/callback")
 # Notice how we inject the database session here: `db: AsyncSession = Depends(get_db)`
@@ -118,7 +118,7 @@ async def auth_callback(request: Request, db: AsyncSession = Depends(get_db)):
 
         # 3. Save their UUID into the secure session cookie
         request.session['user_id'] = str(db_user.id)
-        return RedirectResponse(url="http://localhost:3000/")
+        return RedirectResponse(url="https://belgium-expat-ai.vercel.app/")
         
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Authentication failed: {str(e)}")
