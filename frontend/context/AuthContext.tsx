@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 
 // Define what our User looks like
 type User = {
@@ -17,7 +23,10 @@ type AuthContextType = {
 };
 
 // Create the Context
-const AuthContext = createContext<AuthContextType>({ user: null, loadingAuth: true });
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  loadingAuth: true,
+});
 
 // Create the Provider Component
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -25,7 +34,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loadingAuth, setLoadingAuth] = useState(true);
 
   useEffect(() => {
-    fetch("http://localhost:8000/me", { credentials: "include" })
+    fetch("https://belgium-expat-ai-backend.onrender.com/me", {
+      credentials: "include",
+    })
       .then((res) => {
         if (res.ok) return res.json();
         throw new Error("Not logged in");

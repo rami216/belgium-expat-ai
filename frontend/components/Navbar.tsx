@@ -64,7 +64,7 @@ export default function Navbar() {
                   />
                 )}
                 <a
-                  href="http://localhost:8000/logout"
+                  href="https://belgium-expat-ai-backend.onrender.com/logout"
                   className="text-sm text-red-600 hover:text-red-800 font-medium ml-2"
                 >
                   Logout
@@ -72,7 +72,7 @@ export default function Navbar() {
               </div>
             ) : (
               <a
-                href="http://localhost:8000/login"
+                href="https://belgium-expat-ai-backend.onrender.com/login"
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition shadow-sm"
               >
                 Sign in with Google

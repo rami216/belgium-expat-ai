@@ -20,7 +20,9 @@ export default function ChatPage() {
   useEffect(() => {
     // Only fetch history if the user exists
     if (user) {
-      fetch("http://localhost:8000/api/history", { credentials: "include" })
+      fetch("https://belgium-expat-ai-backend.onrender.com/api/history", {
+        credentials: "include",
+      })
         .then((res) => res.json())
         .then((history) => setChatHistory(history))
         .catch(() => {});
@@ -51,12 +53,15 @@ export default function ChatPage() {
     setIsTyping(true);
 
     try {
-      const response = await fetch("http://localhost:8000/api/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: currentQuestion }),
-        credentials: "include",
-      });
+      const response = await fetch(
+        "https://belgium-expat-ai-backend.onrender.com/api/ask",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: currentQuestion }),
+          credentials: "include",
+        },
+      );
 
       if (!response.ok) throw new Error("API Error");
       const data = await response.json();
@@ -98,12 +103,15 @@ export default function ChatPage() {
   // Calls the backend to save it
   const saveSnippet = async () => {
     try {
-      await fetch("http://localhost:8000/api/saved-texts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: highlightedText }),
-        credentials: "include",
-      });
+      await fetch(
+        "https://belgium-expat-ai-backend.onrender.com/api/saved-texts",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: highlightedText }),
+          credentials: "include",
+        },
+      );
       setSaveSuccess(true);
       setTimeout(() => {
         setHighlightedText(""); // Hide popup after a second
@@ -131,7 +139,7 @@ export default function ChatPage() {
             Members Only
           </h2>
           <a
-            href="http://localhost:8000/login"
+            href="https://belgium-expat-ai-backend.onrender.com/login"
             className="bg-blue-600 text-white font-medium px-6 py-3 rounded-lg hover:bg-blue-700 transition w-full block"
           >
             Sign in with Google

@@ -18,10 +18,10 @@ export default function SavedTextsPage() {
   useEffect(() => {
     if (user) {
       Promise.all([
-        fetch("http://localhost:8000/api/categories", {
+        fetch("https://belgium-expat-ai-backend.onrender.com/api/categories", {
           credentials: "include",
         }).then((res) => res.json()),
-        fetch("http://localhost:8000/api/saved-texts", {
+        fetch("https://belgium-expat-ai-backend.onrender.com/api/saved-texts", {
           credentials: "include",
         }).then((res) => res.json()),
       ])
@@ -40,12 +40,15 @@ export default function SavedTextsPage() {
     if (!newCategoryName.trim()) return;
 
     try {
-      const res = await fetch("http://localhost:8000/api/categories", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newCategoryName.trim() }),
-        credentials: "include",
-      });
+      const res = await fetch(
+        "https://belgium-expat-ai-backend.onrender.com/api/categories",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: newCategoryName.trim() }),
+          credentials: "include",
+        },
+      );
       const newCat = await res.json();
       setCategories([...categories, newCat]);
       setNewCategoryName("");
@@ -60,7 +63,7 @@ export default function SavedTextsPage() {
 
     try {
       const res = await fetch(
-        `http://localhost:8000/api/saved-texts/${textId}`,
+        `https://belgium-expat-ai-backend.onrender.com/api/saved-texts/${textId}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
