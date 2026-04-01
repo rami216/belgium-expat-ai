@@ -38,7 +38,10 @@ class ExpatState(TypedDict):
     category: str
     legal_context: str
     final_advice: str
-
+    p_in: int
+    p_out: int
+    c_in: int
+    c_out: int
 # ==========================================
 # 2. THE ASYNC AGENT NODES
 # ==========================================
@@ -54,9 +57,11 @@ async def profiler_node(state: ExpatState):
     
     response = await llm.ainvoke([HumanMessage(content=prompt)])
     lines = response.content.split('\n')
+    in_tok = response.usage_metadata.get("input_tokens", 0)
+    out_tok = response.usage_metadata.get("output_tokens", 0)
     profile = lines[0].replace("Profile: ", "").strip()
     topic = lines[1].replace("Topic: ", "").strip().lower()
-    return {"profile": profile, "category": topic}
+    return {"profile": profile, "category": topic,"p_in": in_tok, "p_out": out_tok}
 
 async def retriever_node(state: ExpatState):
     print("☁️ [RETRIEVER]: Searching DigitalOcean Postgres for rules...")
@@ -77,7 +82,9 @@ async def consultant_node(state: ExpatState):
     Draft a helpful, clear response. Explain any French/Dutch terms."""
     
     response = await llm.ainvoke([HumanMessage(content=prompt)])
-    return {"final_advice": response.content}
+    in_tok = response.usage_metadata.get("input_tokens", 0)
+    out_tok = response.usage_metadata.get("output_tokens", 0)
+    return {"final_advice": response.content,"c_in": in_tok, "c_out": out_tok}
 
 # ==========================================
 # 3. COMPILE THE ASYNC GRAPH

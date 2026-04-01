@@ -72,6 +72,7 @@ class ExpatResponse(BaseModel):
     profile: str
     category: str
     advice: str
+    new_spend: float
     
 class SaveTextRequest(BaseModel):
     content: str
@@ -144,7 +145,9 @@ async def get_current_user(request: Request, db: AsyncSession = Depends(get_db))
         "email": db_user.email,
         "full_name": db_user.full_name,
         "profile_type": db_user.profile_type,
-        "avatar_url": db_user.avatar_url
+        "avatar_url": db_user.avatar_url,
+        "total_spend": db_user.total_spend or 0.0,
+        "max_spend": float(os.getenv("MAX_SPEND_LIMIT", 1.00))
     }
 
 # ==========================================
@@ -178,20 +181,33 @@ async def get_chat_history(request: Request, db: AsyncSession = Depends(get_db))
 @app.post("/api/ask", response_model=ExpatResponse)
 async def ask_consultant(request: ExpatRequest, http_request: Request, db: AsyncSession = Depends(get_db)):
     user_id = http_request.session.get('user_id')
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Not logged in.")
+    if not user_id: raise HTTPException(status_code=401, detail="Not logged in.")
+
+    # 1. FETCH USER & CHECK SPEND LIMIT
+    result = await db.execute(select(User).where(User.id == user_id))
+    db_user = result.scalars().first()
+    max_limit = float(os.getenv("MAX_SPEND_LIMIT", 1.00))
+    
+    if db_user.total_spend >= max_limit:
+        raise HTTPException(status_code=402, detail="Credit limit reached. Please upgrade your plan.")
 
     try:
-        # 1. Save the USER'S question using SQLAlchemy
         user_msg = ChatMessage(user_id=user_id, role="user", content=request.question)
         db.add(user_msg)
-        await db.commit()
 
-        # 2. Call the AI Engine
+        # 2. CALL AI
         result = await ai_engine.ainvoke({"user_query": request.question})
         ai_advice = result.get("final_advice", "I encountered an error.")
-
-        # 3. Save the AI'S answer using SQLAlchemy
+        
+        # 3. CALCULATE COST (GPT-4o-mini costs $0.15/1M input & $0.60/1M output)
+        total_in = result.get('p_in', 0) + result.get('c_in', 0)
+        total_out = result.get('p_out', 0) + result.get('c_out', 0)
+        cost = (total_in * 0.00000015) + (total_out * 0.00000060)
+        
+        # 4. SAVE EVERYTHING
+        db_user.total_tokens += (total_in + total_out)
+        db_user.total_spend += cost
+        
         ai_msg = ChatMessage(user_id=user_id, role="ai", content=ai_advice)
         db.add(ai_msg)
         await db.commit()
@@ -199,7 +215,8 @@ async def ask_consultant(request: ExpatRequest, http_request: Request, db: Async
         return ExpatResponse(
             profile=result.get("profile", "Unknown"),
             category=result.get("category", "general"),
-            advice=ai_advice
+            advice=ai_advice,
+            new_spend=db_user.total_spend 
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

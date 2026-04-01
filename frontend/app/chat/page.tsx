@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAuth } from "../../context/AuthContext"; // Import global auth
+import { useAuth } from "../../context/AuthContext";
+
 export default function ChatPage() {
-  const { user, loadingAuth } = useAuth(); // Grab from global state!
+  const { user, loadingAuth } = useAuth();
 
   const [question, setQuestion] = useState("");
-  // We added a 'created_at' field to our state!
+
   const [chatHistory, setChatHistory] = useState<
     { role: "user" | "ai"; content: string; created_at?: string }[]
   >([]);
@@ -16,10 +17,11 @@ export default function ChatPage() {
   const [popupPos, setPopupPos] = useState({ x: 0, y: 0 });
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // 1. Check Auth AND Fetch Chat History
+  const [currentSpend, setCurrentSpend] = useState<number>(0);
+
   useEffect(() => {
-    // Only fetch history if the user exists
     if (user) {
+      setCurrentSpend(user.total_spend || 0);
       fetch("https://belgium-expat-ai-backend.onrender.com/api/history", {
         credentials: "include",
       })
@@ -63,15 +65,23 @@ export default function ChatPage() {
         },
       );
 
-      if (!response.ok) throw new Error("API Error");
+      // 🛑 HANDLE CREDIT LIMIT ERRORS
+      if (!response.ok) {
+        if (response.status === 402)
+          throw new Error(
+            "Out of credits! 💳 Please upgrade your plan to continue.",
+          );
+        throw new Error("API Error");
+      }
+
       const data = await response.json();
 
-      // Add AI response to screen (the backend handles saving to the database)
       setChatHistory((prev) => [...prev, { role: "ai", content: data.advice }]);
-    } catch (error) {
+      setCurrentSpend(data.new_spend);
+    } catch (error: any) {
       setChatHistory((prev) => [
         ...prev,
-        { role: "ai", content: "Connection error." },
+        { role: "ai", content: error.message || "Connection error." },
       ]);
     } finally {
       setIsTyping(false);
@@ -88,7 +98,7 @@ export default function ChatPage() {
       const rect = range?.getBoundingClientRect();
       if (rect) {
         setHighlightedText(text);
-        // Position the popup slightly above the selected text
+
         setPopupPos({
           x: rect.left + rect.width / 2,
           y: rect.top - 50,
@@ -100,7 +110,6 @@ export default function ChatPage() {
     }
   };
 
-  // Calls the backend to save it
   const saveSnippet = async () => {
     try {
       await fetch(
@@ -114,9 +123,9 @@ export default function ChatPage() {
       );
       setSaveSuccess(true);
       setTimeout(() => {
-        setHighlightedText(""); // Hide popup after a second
+        setHighlightedText("");
         setSaveSuccess(false);
-        window.getSelection()?.removeAllRanges(); // Deselect the text
+        window.getSelection()?.removeAllRanges();
       }, 1000);
     } catch (error) {
       console.error("Failed to save snippet");
@@ -149,12 +158,28 @@ export default function ChatPage() {
     );
   }
 
+  const maxSpend = user.max_spend || 1.0;
+  const spendPercent = Math.min((currentSpend / maxSpend) * 100, 100);
+
   return (
     <div className="max-w-4xl mx-auto flex flex-col h-[80vh]">
       <div className="bg-white border-b border-gray-200 p-6 rounded-t-2xl shadow-sm flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">
           Digital Relocation Consultant
         </h1>
+
+        {/* THE NEW CREDIT TRACKER UI */}
+        <div className="flex flex-col items-end">
+          <span className="text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">
+            API Usage: ${currentSpend.toFixed(4)} / ${maxSpend.toFixed(2)}
+          </span>
+          <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className={`h-full transition-all duration-500 ${spendPercent > 80 ? "bg-red-500" : "bg-green-500"}`}
+              style={{ width: `${spendPercent}%` }}
+            ></div>
+          </div>
+        </div>
       </div>
 
       <div

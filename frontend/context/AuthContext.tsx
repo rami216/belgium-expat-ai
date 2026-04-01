@@ -15,6 +15,8 @@ type User = {
   full_name: string;
   profile_type: string;
   avatar_url: string;
+  total_spend: number;
+  max_spend: number;
 } | null;
 
 type AuthContextType = {

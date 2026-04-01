@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, ForeignKey
+from sqlalchemy import Column, String, DateTime, ForeignKey,Integer,Float
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 import uuid
@@ -14,6 +14,8 @@ class User(Base):
     avatar_url = Column(String)
     profile_type = Column(String, default="Unknown")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    total_tokens = Column(Integer, default=0)
+    total_spend = Column(Float, default=0.0)
 
 class ChatMessage(Base):
     __tablename__ = "chat_messages"
