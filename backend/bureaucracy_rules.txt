@@ -1,0 +1,40 @@
+# BELGIAN EXPAT BUREAUCRACY SURVIVAL GUIDE: BRUSSELS EDITION
+
+## 1. THE COMMUNE (TOWN HALL) & REGISTRATION
+Rule: Every expat must register at their local commune (e.g., Molenbeek-Saint-Jean, Ixelles, Etterbeek) within 8 days of arriving in Belgium.
+Process:
+- Step 1: Book an appointment online or via email for "First Registration" (Première Inscription). 
+- Step 2: Bring your Passport, Type D Visa, signed housing lease (contrat de bail), and Proof of Enrollment (e.g., from Vrije Universiteit Brussel).
+- Step 3: You will receive an "Annex 15" (Annexe 15 / Bijlage 15). This is a temporary paper document proving you are in the registration process. It is NOT your final ID card.
+- Step 4: The Police Check (Agent de Quartier). A local police officer will visit your apartment unannounced to verify you actually live there. Your name MUST be on the doorbell and mailbox. 
+- Step 5: Once the police approve, the commune will summon you to order your actual Residence Permit (A-Card). This costs around 25-30 EUR and takes another 2-3 weeks to print.
+Warning: Commune administration must legally be conducted in French or Dutch. They are not required to speak English. Bring a French-speaking friend or translate your documents beforehand.
+
+## 2. BANKING & FINANCES
+Rule: You need a bank account for rent, mobile plans, and daily life.
+Traditional Banks: ING, KBC, and BNP Paribas Fortis are the main banks. However, they usually require your official Belgian ID card or Annex 15 to open an account. The process can be very slow.
+Digital Banks: Revolut and Wise are highly recommended for your first few months. You can open them immediately with your passport, and they provide a European IBAN which is legally accepted for paying rent and bills in Belgium.
+Student Visas & Blocked Accounts: Non-EU students must prove financial solvency to get or renew a Type D Visa. The safest way is using your university's Blocked Account procedure. You transfer the required yearly amount to the university, and they pay you a monthly allowance (e.g., around 800-1000 EUR/month) to your Belgian bank account.
+
+## 3. HOUSING & LEASES (CONTRAT DE BAIL)
+Rule: Finding a room (kot) or apartment requires specific legal paperwork. Rent for a student room is typically between 500 EUR and 700 EUR per month.
+The Lease: The "contrat de bail" must be signed by both you and the landlord. 
+Rental Deposit (Garantie Locative): By law, the deposit is usually 2 months of rent. NEVER transfer the deposit directly to the landlord's personal bank account. It must be placed in a special blocked bank account (compte bloqué) in your name.
+Inventory (État des Lieux): Before moving in, an expert or the landlord will do a meticulous inspection of the property. Take photos of EVERYTHING. You will be charged for any scratches when you move out if they aren't documented here.
+
+## 4. HEALTH INSURANCE (MUTUELLE)
+Rule: Health insurance is mandatory in Belgium. 
+Providers: You must register with a "Mutuelle" (e.g., Partenamut, CM, Solidaris). It costs around 10-15 EUR per month.
+How the system works: Unlike some countries where insurance pays the hospital directly, in Belgium, you pay the doctor upfront. The doctor gives you a green paper receipt (Attestation de Soins). You drop this paper into your Mutuelle's mailbox, or scan it in their app, and they reimburse roughly 75-80% of the cost to your bank account a few days later.
+Stickers (Vignettes): Your Mutuelle will mail you sheets of yellow or white stickers with your name and barcode. You must put a sticker on every medical receipt you send them.
+
+## 5. PUBLIC TRANSPORT
+Rule: Brussels has an excellent public transport network run by STIB/MIVB (Metro, Tram, Bus).
+MOBIB Card: You cannot pay cash on the bus. You must buy a physical MOBIB card (costs 5 EUR) to hold your tickets or subscription. You can order it online or at a BOOTIK station.
+Student Discount: If you are a student under 25, the yearly STIB subscription is heavily subsidized and costs only 12 EUR for the entire year. You need a school certificate to get this rate.
+Trains: SNCB/NMBS runs the national trains (e.g., going from Brussels to Antwerp or Ghent). They offer a "Youth Ticket" for people under 26, which offers cheap flat-rate tickets anywhere in the country.
+
+## 6. TELECOM & MOBILE NUMBERS
+Rule: You need a +32 Belgian phone number for the commune, banking, and deliveries.
+Providers: Mobile Vikings is very popular with expats and students because it's cheap, gives lots of data, and can be ordered entirely online. Other networks include Proximus, Orange, and Base.
+Registration: By law, prepaid SIM cards cannot be anonymous. You will have to verify your identity with your passport or Belgian ID card to activate the SIM.
