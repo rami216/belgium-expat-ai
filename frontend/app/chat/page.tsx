@@ -161,6 +161,10 @@ export default function ChatPage() {
   const maxSpend = user.max_spend || 1.0;
   const spendPercent = Math.min((currentSpend / maxSpend) * 100, 100);
 
+  const CREDIT_MULTIPLIER = 10000;
+  const usedCredits = Math.round(currentSpend * CREDIT_MULTIPLIER);
+  const totalCredits = Math.round(maxSpend * CREDIT_MULTIPLIER);
+
   return (
     <div className="max-w-4xl mx-auto flex flex-col h-[80vh]">
       <div className="bg-white border-b border-gray-200 p-6 rounded-t-2xl shadow-sm flex items-center justify-between">
@@ -168,14 +172,17 @@ export default function ChatPage() {
           Digital Relocation Consultant
         </h1>
 
-        {/* THE NEW CREDIT TRACKER UI */}
+        {/* 🪙 VIRTUAL CREDIT TRACKER UI */}
         <div className="flex flex-col items-end">
           <span className="text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">
-            API Usage: ${currentSpend.toFixed(4)} / ${maxSpend.toFixed(2)}
+            Credits: {Math.round(currentSpend * 10000).toLocaleString()} /{" "}
+            {Math.round(maxSpend * 10000).toLocaleString()}
           </span>
           <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
             <div
-              className={`h-full transition-all duration-500 ${spendPercent > 80 ? "bg-red-500" : "bg-green-500"}`}
+              className={`h-full transition-all duration-500 ${
+                spendPercent > 80 ? "bg-red-500" : "bg-blue-600"
+              }`}
               style={{ width: `${spendPercent}%` }}
             ></div>
           </div>
