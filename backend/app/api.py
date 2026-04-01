@@ -293,3 +293,7 @@ async def create_category(req: CategoryCreateRequest, request: Request, db: Asyn
     return {"id": str(new_cat.id), "name": new_cat.name}
 
 
+#  HEALTH CHECK (To prevent Render from sleeping)
+@app.get("/health")
+async def health_check():
+    return {"status": "alive", "message": "Relocation Consultant is awake!"}
