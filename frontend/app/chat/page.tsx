@@ -202,6 +202,10 @@ export default function ChatPage() {
   const usedCredits = Math.round(currentSpend * CREDIT_MULTIPLIER);
   const totalCredits = Math.round(maxSpend * CREDIT_MULTIPLIER);
 
+  // 🛑 THE LOCKOUT LOGIC: Check if they are out of credits and NOT a Pro user
+  const isOutOfCredits =
+    user.subscription_status !== "pro" && currentSpend >= maxSpend;
+
   return (
     <div className="max-w-4xl mx-auto flex flex-col h-[80vh]">
       <div className="bg-white border-b border-gray-200 p-6 rounded-t-2xl shadow-sm flex items-center justify-between">
@@ -320,20 +324,29 @@ export default function ChatPage() {
         </div>
       )}
 
+      {/* 🛑 THE UPDATED FORM: Disabled when out of credits */}
       <div className="bg-white p-4 rounded-b-2xl border border-gray-200 shadow-sm">
         <form onSubmit={askConsultant} className="flex space-x-4">
           <input
             type="text"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
-            className="flex-1 bg-gray-100 px-4 py-3 rounded-xl outline-none"
-            placeholder="Ask a question..."
-            disabled={isTyping}
+            className="flex-1 bg-gray-100 px-4 py-3 rounded-xl outline-none disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed"
+            placeholder={
+              isOutOfCredits
+                ? "🔒 Out of credits! Please upgrade to Pro to continue."
+                : "Ask a question..."
+            }
+            disabled={isTyping || isOutOfCredits}
           />
           <button
             type="submit"
-            disabled={isTyping}
-            className="bg-blue-600 text-white px-6 py-3 rounded-xl"
+            disabled={isTyping || isOutOfCredits}
+            className={`px-6 py-3 rounded-xl font-bold transition-all ${
+              isOutOfCredits || isTyping
+                ? "bg-gray-400 text-gray-200 cursor-not-allowed shadow-none"
+                : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
+            }`}
           >
             Ask
           </button>
