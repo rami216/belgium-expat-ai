@@ -277,13 +277,16 @@ async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
             
             await db.commit()
 
+    
     # 2. Handle the monthly subscription renewal (MONTHLY RESET)
     elif event.type == 'invoice.payment_succeeded':
         invoice = event.data.object
         customer_id = invoice.customer
         
-        # Make sure this invoice is for a subscription and not just a one-off charge
-        if invoice.subscription:
+        # 🚀 STRIPE FIX: Safely check if it's a subscription without crashing!
+        is_subscription = invoice.get('subscription') or invoice.get('billing_reason') in ['subscription_create', 'subscription_cycle']
+        
+        if is_subscription:
             result = await db.execute(select(User).where(User.stripe_customer_id == customer_id))
             db_user = result.scalars().first()
             if db_user:
