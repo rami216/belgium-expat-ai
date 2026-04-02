@@ -250,29 +250,51 @@ async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     if event.type == 'checkout.session.completed':
         session = event.data.object
         
-        # 🚀 STRIPE FIX: Use dot notation instead of .get()!
         user_id = session.client_reference_id
         customer_id = session.customer
+        
+        # 🚀 ADDED: Get the email as a fallback for manual Stripe Dashboard testing
+        customer_email = session.customer_details.email if session.customer_details else None
 
+        db_user = None
+        
+        # Try finding by ID first (Normal App Flow)
         if user_id:
-            # Upgrade the user in the database!
             result = await db.execute(select(User).where(User.id == user_id))
             db_user = result.scalars().first()
+        # Fallback to finding by Email (Stripe Test Clock Flow)
+        elif customer_email:
+            result = await db.execute(select(User).where(User.email == customer_email))
+            db_user = result.scalars().first()
+
+        if db_user:
+            db_user.stripe_customer_id = customer_id
+            db_user.subscription_status = "pro"
+            
+            # 🌟 THE RESET: Wipe their usage stats clean on day 1!
+            db_user.total_spend = 0.0
+            db_user.total_tokens = 0
+            
+            await db.commit()
+
+    # 2. Handle the monthly subscription renewal (MONTHLY RESET)
+    elif event.type == 'invoice.payment_succeeded':
+        invoice = event.data.object
+        customer_id = invoice.customer
+        
+        # Make sure this invoice is for a subscription and not just a one-off charge
+        if invoice.subscription:
+            result = await db.execute(select(User).where(User.stripe_customer_id == customer_id))
+            db_user = result.scalars().first()
             if db_user:
-                db_user.stripe_customer_id = customer_id
-                db_user.subscription_status = "pro"
-                
-                # 🌟 THE RESET: Wipe their usage stats clean!
+                # 🌟 THE MONTHLY RESET: Wipe stats clean every 30 days!
                 db_user.total_spend = 0.0
                 db_user.total_tokens = 0
-                
                 await db.commit()
 
-    # 2. Handle subscription cancellation
+    # 3. Handle subscription cancellation (DOWNGRADE)
     elif event.type == 'customer.subscription.deleted':
         subscription = event.data.object
-        
-        # 🚀 STRIPE FIX: Use dot notation instead of .get()!
         customer_id = subscription.customer
         
         result = await db.execute(select(User).where(User.stripe_customer_id == customer_id))
@@ -280,22 +302,8 @@ async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
         if db_user:
             db_user.subscription_status = "free"
             await db.commit()
-    elif event.type == 'invoice.payment_succeeded':
-        invoice = event.data.object
-        customer_id = invoice.customer
-        
-        # Make sure this invoice is for a subscription and not just a random one-off charge
-        if invoice.subscription:
-            result = await db.execute(select(User).where(User.stripe_customer_id == customer_id))
-            db_user = result.scalars().first()
-            if db_user:
-                # 🌟 THE MONTHLY RESET!
-                db_user.total_spend = 0.0
-                db_user.total_tokens = 0
-                await db.commit()
 
     return {"status": "success"}
-
 #endregion checkout
 @app.post("/api/ask", response_model=ExpatResponse)
 async def ask_consultant(request: ExpatRequest, http_request: Request, db: AsyncSession = Depends(get_db)):
