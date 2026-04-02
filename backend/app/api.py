@@ -246,7 +246,7 @@ async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     except stripe.error.SignatureVerificationError as e:
         raise HTTPException(status_code=400, detail="Invalid signature")
 
-    # 1. Handle the checkout.session.completed event
+    # 1. Handle the checkout.session.completed event (FIRST TIME PURCHASE)
     if event.type == 'checkout.session.completed':
         session = event.data.object
         
@@ -261,6 +261,11 @@ async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
             if db_user:
                 db_user.stripe_customer_id = customer_id
                 db_user.subscription_status = "pro"
+                
+                # 🌟 THE RESET: Wipe their usage stats clean!
+                db_user.total_spend = 0.0
+                db_user.total_tokens = 0
+                
                 await db.commit()
 
     # 2. Handle subscription cancellation
@@ -275,9 +280,21 @@ async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
         if db_user:
             db_user.subscription_status = "free"
             await db.commit()
+    elif event.type == 'invoice.payment_succeeded':
+        invoice = event.data.object
+        customer_id = invoice.customer
+        
+        # Make sure this invoice is for a subscription and not just a random one-off charge
+        if invoice.subscription:
+            result = await db.execute(select(User).where(User.stripe_customer_id == customer_id))
+            db_user = result.scalars().first()
+            if db_user:
+                # 🌟 THE MONTHLY RESET!
+                db_user.total_spend = 0.0
+                db_user.total_tokens = 0
+                await db.commit()
 
     return {"status": "success"}
-
 
 #endregion checkout
 @app.post("/api/ask", response_model=ExpatResponse)

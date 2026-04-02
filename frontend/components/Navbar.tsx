@@ -29,6 +29,12 @@ export default function Navbar() {
               >
                 Pricing
               </Link>
+              <Link
+                href="/how-it-works"
+                className="text-gray-500 hover:text-blue-600 font-bold"
+              >
+                how-it-works!
+              </Link>
 
               {user && (
                 <>
